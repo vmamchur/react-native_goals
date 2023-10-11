@@ -1,20 +1,60 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { StyleSheet, View, FlatList, Button, StatusBar } from 'react-native';
+import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
+
+import GoalInput from './components/GoalInput';
+import GoalItem from './components/GoalItem';
 
 export default function App() {
+  const [isGoalInputVisible, setIsGoalInputVisible] = useState(false);
+  const [goals, setGoals] = useState([]);
+
+  const toggleAddGoalHandler = useCallback(() => {
+    setIsGoalInputVisible((prevState) => !prevState);
+  }, []);
+
+  const goalAddHandler = useCallback((enteredGoalText) => {
+    if (!enteredGoalText.trim().length) {
+      return;
+    }
+
+    setGoals((currentGoals) => [...currentGoals, { id: Math.random().toString(), text: enteredGoalText }]);
+    toggleAddGoalHandler();
+  }, []);
+
+  const deleteGoalHandler = useCallback((id) => {
+    setGoals((currentGoals) => currentGoals.filter((goal) => goal.id !== id));
+  }, []);
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <>
+      <ExpoStatusBar style="light" />
+      <View style={styles.appContainer}>
+        <Button onPress={toggleAddGoalHandler} title="Add new goal" color="#5e0acc" />
+        <GoalInput isVisible={isGoalInputVisible} onAddGoal={goalAddHandler} onCancel={toggleAddGoalHandler} />
+
+        <View style={styles.goalsContainer}>
+          <FlatList
+            data={goals}
+            renderItem={(itemData) => (
+              <GoalItem id={itemData.item.id} text={itemData.item.text} onDeleteItem={deleteGoalHandler} />
+            )}
+            keyExtractor={item => item.id}
+            alwaysBounceVertical={false}
+          />
+        </View>
+      </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  appContainer: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingTop: StatusBar.currentHeight,
+    paddingHorizontal: 16,
+  },
+  goalsContainer: {
+    flex: 4,
   },
 });
